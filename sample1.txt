@@ -1,0 +1,3 @@
+The quick brown fox jumps over the lazy dog.
+The dog barks at the fox, but the fox doesn't care.
+Quick and brown, the fox outsmarts the dog.
