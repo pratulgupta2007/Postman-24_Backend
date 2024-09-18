@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -20,6 +21,7 @@ func main() {
 	fmt.Println("Word Frequency Analysis Report")
 
 	c := make(chan string)
+	counts := make(chan int)
 
 	go func() {
 
@@ -32,15 +34,23 @@ func main() {
 				if err != nil {
 					log.Fatal(err)
 				}
-				c <- string(f)
+				s := string(f)
+				c <- s
+				counts <- len(strings.Fields(s))
 			}()
 		}
 		wg.Wait()
 		close(c)
+		close(counts)
 	}()
 
+	totalwordcount := 0
 	for i := range c {
-		fmt.Printf(i)
+		fmt.Println(i)
+		j := <-counts
+		totalwordcount += j
 	}
+	fmt.Println("Total word count:", totalwordcount)
+	fmt.Println("Files processed:", l-1)
 
 }
