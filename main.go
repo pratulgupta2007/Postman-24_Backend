@@ -20,6 +20,10 @@ func main() {
 	var casesens string
 	fmt.Scanln(&casesens)
 
+	fmt.Printf("Exclude Articles (Y/N): ")
+	var excludearticles string
+	fmt.Scanln(&excludearticles)
+
 	totalwordcount := 0
 	var counter = struct {
 		sync.Mutex
@@ -33,24 +37,61 @@ func main() {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+
 			f, err := os.ReadFile(os.Args[i])
 			if err != nil {
 				log.Fatal(err)
 			}
 			s := strings.Fields(string(f))
+
 			switch casesens {
-			case "N":
-				for _, w := range s {
-					counter.Lock()
-					counter.a[strings.ToLower(strings.Trim(w, ",.;:?\"'()!"))] += 1
-					counter.Unlock()
-				}
 			case "Y":
-				for _, w := range s {
-					counter.Lock()
-					counter.a[strings.Trim(w, ",.;:?\"'()!")] += 1
-					counter.Unlock()
+				switch excludearticles {
+				case "Y":
+					for _, w := range s {
+						w0 := strings.Trim(w, ",.;:?\"'()!")
+						w1 := strings.ToLower(w0)
+						if w1 != "a" && w1 != "an" && w1 != "the" {
+							counter.Lock()
+							counter.a[w0] += 1
+							counter.Unlock()
+							continue
+						}
+						totalwordcount -= 1
+					}
+				case "N":
+					for _, w := range s {
+						counter.Lock()
+						counter.a[strings.Trim(w, ",.;:?\"'()!")] += 1
+						counter.Unlock()
+					}
+				default:
+					log.Fatal("Incorrect option provided for article exclusion. Please write only Y or N")
 				}
+
+			case "N":
+				switch excludearticles {
+				case "Y":
+					for _, w := range s {
+						w1 := strings.ToLower(strings.Trim(w, ",.;:?\"'()!"))
+						if w1 != "a" && w1 != "an" && w1 != "the" {
+							counter.Lock()
+							counter.a[w1] += 1
+							counter.Unlock()
+							continue
+						}
+						totalwordcount -= 1
+					}
+				case "N":
+					for _, w := range s {
+						counter.Lock()
+						counter.a[strings.Trim(w, ",.;:?\"'()!")] += 1
+						counter.Unlock()
+					}
+				default:
+					log.Fatal("Incorrect option provided for article exclusion. Please write only Y or N")
+				}
+
 			default:
 				log.Fatal("Incorrect option provided for case sensitivity. Please write only Y or N")
 			}
@@ -62,6 +103,7 @@ func main() {
 
 	uqcount := len(counter.a)
 	keys := make([]string, 0, uqcount)
+
 	for k := range counter.a {
 		keys = append(keys, k)
 	}
