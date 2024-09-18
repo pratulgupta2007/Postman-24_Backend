@@ -15,10 +15,12 @@ func main() {
 	if l == 1 {
 		log.Fatal("No file provided!")
 	}
-
+	var counter = struct {
+		sync.Mutex
+		a map[string]int
+	}{a: make(map[string]int)}
 	fmt.Println("Word Frequency Analysis Report")
 
-	c := make(chan map[string]int)
 	counts := make(chan int)
 
 	go func() {
@@ -33,25 +35,23 @@ func main() {
 					log.Fatal(err)
 				}
 				s := strings.Fields(string(f))
-				m := map[string]int{}
 				for _, w := range s {
-					m[strings.ToLower(strings.Trim(w, ",.;:?\"'()!"))] += 1
+					counter.Lock()
+					counter.a[strings.ToLower(strings.Trim(w, ",.;:?\"'()!"))] += 1
+					counter.Unlock()
 				}
-				c <- m
 				counts <- len(s)
 			}()
 		}
 		wg.Wait()
-		close(c)
 		close(counts)
 	}()
 
 	totalwordcount := 0
-	for i := range c {
-		fmt.Println(i)
-		j := <-counts
+	for j := range counts {
 		totalwordcount += j
 	}
+	fmt.Println(counter.a)
 	fmt.Println("Total word count:", totalwordcount)
 	fmt.Println("Files processed:", l-1)
 
