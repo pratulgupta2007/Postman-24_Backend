@@ -16,14 +16,17 @@ func main() {
 		log.Fatal("No file provided!")
 	}
 
+	fmt.Printf("Case Sensitive (Y/N): ")
+	var casesens string
+	fmt.Scanln(&casesens)
+
 	totalwordcount := 0
 	var counter = struct {
 		sync.Mutex
 		a map[string]int
 	}{a: make(map[string]int)}
 
-	fmt.Println("Word Frequency Analysis Report")
-	fmt.Println("----------------------------------")
+	report := "Word Frequency Analysis Report\n----------------------------------\n"
 
 	wg := sync.WaitGroup{}
 	for i := 1; i < l; i++ {
@@ -35,11 +38,23 @@ func main() {
 				log.Fatal(err)
 			}
 			s := strings.Fields(string(f))
-			for _, w := range s {
-				counter.Lock()
-				counter.a[strings.ToLower(strings.Trim(w, ",.;:?\"'()!"))] += 1
-				counter.Unlock()
+			switch casesens {
+			case "N":
+				for _, w := range s {
+					counter.Lock()
+					counter.a[strings.ToLower(strings.Trim(w, ",.;:?\"'()!"))] += 1
+					counter.Unlock()
+				}
+			case "Y":
+				for _, w := range s {
+					counter.Lock()
+					counter.a[strings.Trim(w, ",.;:?\"'()!")] += 1
+					counter.Unlock()
+				}
+			default:
+				log.Fatal("Incorrect option provided for case sensitivity. Please write only Y or N")
 			}
+
 			totalwordcount += len(s)
 		}()
 	}
@@ -57,13 +72,25 @@ func main() {
 
 	h := 1
 	for _, k := range keys[:15] {
-		fmt.Printf("%d. %s: %d\n", h, k, counter.a[k])
+		report += fmt.Sprintf("%d. %s: %d\n", h, k, counter.a[k])
 		h++
 	}
 
-	fmt.Println("----------------------------------")
-	fmt.Println("Total unique words:", uqcount)
-	fmt.Println("Total word count:", totalwordcount)
-	fmt.Println("Files processed:", l-1)
+	report += "----------------------------------\n"
+	report += fmt.Sprintf("Total unique words: %d\n", uqcount)
+	report += fmt.Sprintf("Total word count: %d\n", totalwordcount)
+	report += fmt.Sprintf("Files processed: %d\n", l-1)
+
+	fmt.Printf(report)
+
+	file, err := os.OpenFile("analysis_report.txt", os.O_CREATE|os.O_WRONLY, 0777)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	_, err = file.Write([]byte(report))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 }
