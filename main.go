@@ -8,8 +8,6 @@ import (
 	"sync"
 )
 
-var dict = map[string]int{}
-
 func main() {
 
 	l := len(os.Args)
@@ -20,7 +18,7 @@ func main() {
 
 	fmt.Println("Word Frequency Analysis Report")
 
-	c := make(chan string)
+	c := make(chan map[string]int)
 	counts := make(chan int)
 
 	go func() {
@@ -34,9 +32,13 @@ func main() {
 				if err != nil {
 					log.Fatal(err)
 				}
-				s := string(f)
-				c <- s
-				counts <- len(strings.Fields(s))
+				s := strings.Fields(string(f))
+				m := map[string]int{}
+				for _, w := range s {
+					m[strings.ToLower(strings.Trim(w, ",.;:?\"'()!"))] += 1
+				}
+				c <- m
+				counts <- len(s)
 			}()
 		}
 		wg.Wait()
