@@ -2,23 +2,29 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 )
 
-func main() {
-	fmt.Println("Word Frequency Analysis Report")
-	s1 := readfile("./sample1.txt")
-	s2 := readfile("./sample2.txt")
-	s3 := readfile("./sample3.txt")
-	fmt.Println(s1, s2, s3)
+var dict = map[string]int{}
 
+func main() {
+
+	if len(os.Args) == 1 {
+		log.Fatal("No file provided!")
+	}
+
+	for i := 1; i < len(os.Args); i++ {
+		fmt.Println(readfile(os.Args[i]))
+	}
+
+	fmt.Println("Word Frequency Analysis Report")
 }
 
 func readfile(dir string) string {
 	f, err := os.ReadFile(dir)
 	if err != nil {
-		panic((err))
+		log.Fatal(err)
 	}
-	s := string(f)
-	return s
+	return string(f)
 }
