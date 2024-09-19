@@ -1,17 +1,10 @@
 package main
 
-import (
-	//"errors"
-	"fmt"
-	"log"
-	"os"
-	"sort"
-	"strings"
-	"sync"
-)
-
 func main() {
 
+	porter("generalization")
+
+	/**
 	//Confirming if atleast 1 file path has been given as a command line arg
 	l := len(os.Args)
 	if l == 1 {
@@ -178,5 +171,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	**/
 }
