@@ -1,13 +1,19 @@
 package main
 
+import (
+	"fmt"
+	"log"
+	"os"
+	"sort"
+	"strings"
+	"sync"
+)
+
 func main() {
 
-	porter("generalization")
-
-	/**
 	//Confirming if atleast 1 file path has been given as a command line arg
 	l := len(os.Args)
-	if l == 1 {
+	if l == 2 {
 		log.Fatal("No file provided!")
 	}
 
@@ -19,6 +25,18 @@ func main() {
 	fmt.Printf("Exclude Articles (Y/N): ")
 	var excludearticles string
 	fmt.Scanln(&excludearticles)
+
+	fmt.Printf("Stem (Y/N): ")
+	var stemyn string
+	fmt.Scanln(&stemyn)
+	var stem bool
+	if stemyn == "Y" {
+		stem = true
+	} else if stemyn == "N" {
+		stem = false
+	} else {
+		log.Fatal("Incorrect option provided for stem. Please write only Y or N")
+	}
 
 	//Intiliasing word count and histogram-like-map variables
 	totalwordcount := 0
@@ -32,7 +50,7 @@ func main() {
 
 	//Estabilshing Wait Group and iterating through each file provided
 	wg := sync.WaitGroup{}
-	for i := 1; i < l; i++ {
+	for i := 2; i < l; i++ {
 		wg.Add(1)
 
 		//Creating a go routine: One for each file
@@ -55,8 +73,8 @@ func main() {
 						w0 := strings.Trim(w, ",.;:?\"'()!") //Trying to eliminate all possible punctuation
 						w1 := strings.ToLower(w0)
 						if w1 != "a" && w1 != "an" && w1 != "the" {
-							counter.Lock()     //Locking and unlocking the Mutex to prevent
-							counter.a[w0] += 1 //clash between the goroutines
+							counter.Lock()                   //Locking and unlocking the Mutex to prevent
+							counter.a[porter(w1, stem)] += 1 //clash between the goroutines
 							counter.Unlock()
 							continue
 						}
@@ -65,7 +83,7 @@ func main() {
 				case "N":
 					for _, w := range s {
 						counter.Lock()
-						counter.a[strings.Trim(w, ",.;:?\"'()!")] += 1
+						counter.a[porter(strings.Trim(w, ",.;:?\"'()!"), stem)] += 1
 						counter.Unlock()
 					}
 				default:
@@ -79,7 +97,7 @@ func main() {
 						w1 := strings.ToLower(strings.Trim(w, ",.;:?\"'()!"))
 						if w1 != "a" && w1 != "an" && w1 != "the" {
 							counter.Lock()
-							counter.a[w1] += 1
+							counter.a[porter(w1, stem)] += 1
 							counter.Unlock()
 							continue
 						}
@@ -88,7 +106,7 @@ func main() {
 				case "N":
 					for _, w := range s {
 						counter.Lock()
-						counter.a[strings.ToLower(strings.Trim(w, ",.;:?\"'()!"))] += 1
+						counter.a[porter(strings.ToLower(strings.Trim(w, ",.;:?\"'()!")), stem)] += 1
 						counter.Unlock()
 					}
 				default:
@@ -171,5 +189,4 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	**/
 }
