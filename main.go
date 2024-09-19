@@ -1,6 +1,7 @@
 package main
 
 import (
+	//"errors"
 	"fmt"
 	"log"
 	"os"
@@ -94,7 +95,7 @@ func main() {
 				case "N":
 					for _, w := range s {
 						counter.Lock()
-						counter.a[strings.Trim(w, ",.;:?\"'()!")] += 1
+						counter.a[strings.ToLower(strings.Trim(w, ",.;:?\"'()!"))] += 1
 						counter.Unlock()
 					}
 				default:
@@ -136,11 +137,39 @@ func main() {
 	report += fmt.Sprintf("Total unique words: %d\n", uqcount)
 	report += fmt.Sprintf("Total word count: %d\n", totalwordcount)
 	report += fmt.Sprintf("Files processed: %d\n", l-1)
+	report += "----------------------------------\n"
+
+	bars := make(chan string)
+
+	max := 0
+	for _, k := range keys[:15] {
+		if len(k) > max {
+			max = len(k)
+		}
+	}
+
+	go func() {
+		wg0 := sync.WaitGroup{}
+		for _, k := range keys[:15] {
+			wg0.Add(1)
+			go func() {
+				defer wg0.Done()
+				bars <- fmt.Sprintf("%s%s | %s\n", k, strings.Repeat(" ", max-len(k)), strings.Repeat("\u220E", counter.a[k]))
+			}()
+		}
+		wg0.Wait()
+		close(bars)
+	}()
+
+	for i := range bars {
+		report += i
+	}
 
 	fmt.Printf(report)
 
 	//Writing data to file (while overwriting)
-	file, err := os.OpenFile("analysis_report.txt", os.O_CREATE|os.O_WRONLY, 0777)
+
+	file, err := os.OpenFile("analysis_report.txt", os.O_CREATE|os.O_TRUNC, 0777)
 	if err != nil {
 		log.Fatal(err)
 	}
